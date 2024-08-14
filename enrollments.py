@@ -60,10 +60,8 @@ def preprocess_enrollment_data(file_path):
     processed_df['user_id'] = processed_df['user_id'].apply(lambda x: str(int(x)) if pd.notna(x) else x)
     processed_df['course_id'] = processed_df['course_id'].apply(lambda x: str(int(x)) if pd.notna(x) else x)
 
-    print(processed_df)
-
     # add status column
-    processed_df['type'] = 'student'
+    processed_df['role'] = 'student'
 
     return processed_df
 
@@ -101,7 +99,7 @@ def preprocess_teacher_enrollments(file_path):
     mapped_df['course_id'] = mapped_df['course_id'].astype(str)
 
     # add status column
-    mapped_df['type'] = 'teacher'
+    mapped_df['role'] = 'teacher'
 
     return mapped_df
 
@@ -118,7 +116,6 @@ courses_df = load_csv('temp_inputs/courses.csv')
 
 # Merge teacher and student enrollments
 full_enrollment_df = pd.concat([enrollments_df, teacher_enroll_df])
-print(full_enrollment_df)
 
 # Format the MS_COURSE_ID and MERGE_CODE without decimals
 courses_df['MS_COURSE_ID'] = courses_df['MS_COURSE_ID'].apply(lambda x: str(int(x)) if pd.notna(x) else x)
@@ -139,8 +136,6 @@ full_enrollment_df['course_id'] = full_enrollment_df['course_id'].apply(lambda x
 remove_courses = courses_df[(courses_df['CANVAS_NEEDED'] == 'N')]['MS_COURSE_ID']
 full_enrollment_df = full_enrollment_df[~full_enrollment_df['course_id'].isin(remove_courses)]
 
-print(full_enrollment_df)
-
 # Format User ID to be prefixed with "u" and 6 digits  
 def format_user_id(user_id):
     """Ensure user_id is properly formatted."""
@@ -160,9 +155,20 @@ full_enrollment_df['status'] = 'active'
 
 # Save separate CSV for each term_id
 for term in full_enrollment_df['term_id'].dropna().unique():
+    # Create directory path
+    output_dir = f'temp_outputs/enrollments_{term}'
+    
+    # Check if the directory exists, if not, create it
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # Define the file path for saving the CSV
+    file_path = os.path.join(output_dir, f'enrollments.csv')
+    
+    # Drop unnecessary columns and save the CSV in the corresponding directory
     subset = full_enrollment_df[full_enrollment_df['term_id'] == term]
     subset = subset.drop(columns=['subject', 'term_id'])  # Remove specified columns
-    subset.to_csv(f'temp_outputs/updated_enrollments_{term}.csv', index=False)
+    subset.to_csv(file_path, index=False)
 
 # update courses file:
 
@@ -171,8 +177,7 @@ courses_df = courses_df[courses_df['CANVAS_NEEDED'] == 'Y']
 
 # Select the specified columns and add the 'status' column with all values set to "active"
 selected_columns = ['long_name', 'short_name', 'status', 'course_id', 'account_id', 'term_id', 'blueprint_course_id']
-courses_df = courses_df[selected_columns[:-1]]  # Exclude 'status' initially since it's not in the original DataFrame
-courses_df['status'] = 'active'  # Add 'status' with all entries set to "active"
+courses_df = courses_df[selected_columns]
 
 # Save the filtered data to a new CSV file
-courses_df.to_csv('temp_outputs/updated_courses.csv', index=False)
+courses_df.to_csv('temp_outputs/courses.csv', index=False)
