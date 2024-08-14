@@ -8,7 +8,7 @@ A data sync tool to convert MySchool exports to files compatible with Canvas SIS
 
 This script relies on specific data exports from MySchool to generate enrolment data for Canvas.
 
-#### 1.1 Get Courses CSV File.
+#### 1.1 Get Courses CSV File
 
 1. From MySchool select "Data Reports" -> "Export".
 2. Then select the following
