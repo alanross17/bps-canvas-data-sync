@@ -2,6 +2,8 @@
 
 A data sync tool to convert MySchool exports to files compatible with Canvas SIS import. Currently this script can only handle enrolment file creation, but future plans to add user management are in progress.
 
+This project stems from the weirdly unintuative ways that MySchool handles data export, and the widely differnet formats and misaligned CSV files it produces.
+
 ## How to Use
 
 ### 1.0 Collect Required Data
