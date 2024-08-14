@@ -57,20 +57,20 @@ def map_teacher_ids(teacher_df, id_df):
     return teacher_df
 
 # Load and preprocess the enrollments CSV
-enrollments_df = preprocess_enrollment_data('enrollments.csv')
+enrollments_df = preprocess_enrollment_data('temp_inputs/enrollments.csv')
 enrollments_df['user_id'] = enrollments_df['user_id'].astype(str)
 enrollments_df['type'] = 'student'
 
 # Load teacher enrollments and teacher IDs
-teacher_enroll_df = preprocess_teacher_enrollments('teacher_enroll.csv')
-teacher_ids_df = pd.read_csv('teacher_ids.csv')
+teacher_enroll_df = preprocess_teacher_enrollments('temp_inputs/teacher_enroll.csv')
+teacher_ids_df = pd.read_csv('temp_inputs/teacher_ids.csv')
 teacher_enroll_df = map_teacher_ids(teacher_enroll_df, teacher_ids_df)
 teacher_enroll_df['user_id'] = teacher_enroll_df['user_id'].astype(str)
 teacher_enroll_df['course_id'] = teacher_enroll_df['course_id'].astype(str)
 teacher_enroll_df['type'] = 'teacher'
 
 # Load the courses CSV file
-courses_df = pd.read_csv('courses.csv')
+courses_df = pd.read_csv('temp_inputs/courses.csv')
 
 # Merge teacher and student enrollments
 full_enrollment_df = pd.concat([enrollments_df, teacher_enroll_df])
@@ -129,7 +129,7 @@ full_enrollment_df['status'] = 'active'
 for term in full_enrollment_df['term_id'].dropna().unique():
     subset = full_enrollment_df[full_enrollment_df['term_id'] == term]
     subset = subset.drop(columns=['subject', 'term_id'])  # Remove specified columns
-    subset.to_csv(f'updated_enrollments_{term}.csv', index=False)
+    subset.to_csv(f'temp_outputs/updated_enrollments_{term}.csv', index=False)
 
 # update courses file:
 
@@ -142,4 +142,4 @@ courses_df = courses_df[selected_columns[:-1]]  # Exclude 'status' initially sin
 courses_df['status'] = 'active'  # Add 'status' with all entries set to "active"
 
 # Save the filtered data to a new CSV file
-courses_df.to_csv('updated_courses.csv', index=False)
+courses_df.to_csv('temp_outputs/updated_courses.csv', index=False)
