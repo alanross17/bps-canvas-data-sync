@@ -1,8 +1,29 @@
 import pandas as pd
+import glob
+import os
+
+def load_and_combine_csv(directory):
+    """Load all CSV files in the specified directory and combine them into a single DataFrame."""
+    # Build the pattern to match all CSV files
+    pattern = os.path.join(directory, '*.csv')
+    # List all files that match the pattern
+    csv_files = glob.glob(pattern)
+    # Load and concatenate all CSV files into a single DataFrame
+    df_list = [pd.read_csv(file) for file in csv_files]
+    combined_df = pd.concat(df_list, ignore_index=True)
+    return combined_df
+
+def load_csv(file_path):
+    # Safely load a CSV file into a DataFrame.
+    try:
+        return pd.read_csv(file_path)
+    except Exception as e:
+        print(f"Failed to load file {file_path}: {e}")
+        return pd.DataFrame()
 
 def preprocess_enrollment_data(file_path):
     # Read the CSV file into a DataFrame
-    df = pd.read_csv(file_path, header=None)
+    df = load_and_combine_csv(file_path)
     
     # Initialize an empty list to collect processed rows
     processed_rows = []
@@ -34,10 +55,19 @@ def preprocess_enrollment_data(file_path):
     
     # Convert the list of processed rows into a DataFrame
     processed_df = pd.DataFrame(processed_rows)
+
+    # clean up data types
+    processed_df['user_id'] = processed_df['user_id'].apply(lambda x: str(int(x)) if pd.notna(x) else x)
+    processed_df['course_id'] = processed_df['course_id'].apply(lambda x: str(int(x)) if pd.notna(x) else x)
+
+    print(processed_df)
+
+    # add status column
+    processed_df['type'] = 'student'
+
     return processed_df
 
-def preprocess_teacher_enrollments(file_path):
-    df = pd.read_csv(file_path)
+def melt_teachers(df):
     # Drop columns where all entries are NaN which may result from extra commas in the CSV
     df.dropna(axis=1, how='all', inplace=True)
     # Find all columns starting from 'teacher' to the end
@@ -56,24 +86,39 @@ def map_teacher_ids(teacher_df, id_df):
     teacher_df['user_id'] = teacher_df['user_id'].apply(lambda x: str(int(x)) if pd.notna(x) else x)
     return teacher_df
 
+def preprocess_teacher_enrollments(file_path):
+    df = load_and_combine_csv(file_path)
+    
+    # reformat data
+    formatted_df = melt_teachers(df)
+
+    # map user ids
+    teacher_ids_df = load_csv('temp_inputs/teacher_ids.csv')
+    mapped_df = map_teacher_ids(formatted_df, teacher_ids_df)
+
+    # clean up data type
+    mapped_df['user_id'] = mapped_df['user_id'].astype(str)
+    mapped_df['course_id'] = mapped_df['course_id'].astype(str)
+
+    # add status column
+    mapped_df['type'] = 'teacher'
+
+    return mapped_df
+
+
+
 # Load and preprocess the enrollments CSV
-enrollments_df = preprocess_enrollment_data('temp_inputs/enrollments.csv')
-enrollments_df['user_id'] = enrollments_df['user_id'].astype(str)
-enrollments_df['type'] = 'student'
+enrollments_df = preprocess_enrollment_data('temp_inputs/student_enroll/')
 
 # Load teacher enrollments and teacher IDs
-teacher_enroll_df = preprocess_teacher_enrollments('temp_inputs/teacher_enroll.csv')
-teacher_ids_df = pd.read_csv('temp_inputs/teacher_ids.csv')
-teacher_enroll_df = map_teacher_ids(teacher_enroll_df, teacher_ids_df)
-teacher_enroll_df['user_id'] = teacher_enroll_df['user_id'].astype(str)
-teacher_enroll_df['course_id'] = teacher_enroll_df['course_id'].astype(str)
-teacher_enroll_df['type'] = 'teacher'
+teacher_enroll_df = preprocess_teacher_enrollments('temp_inputs/teacher_enroll/')
 
 # Load the courses CSV file
-courses_df = pd.read_csv('temp_inputs/courses.csv')
+courses_df = load_csv('temp_inputs/courses.csv')
 
 # Merge teacher and student enrollments
 full_enrollment_df = pd.concat([enrollments_df, teacher_enroll_df])
+print(full_enrollment_df)
 
 # Format the MS_COURSE_ID and MERGE_CODE without decimals
 courses_df['MS_COURSE_ID'] = courses_df['MS_COURSE_ID'].apply(lambda x: str(int(x)) if pd.notna(x) else x)
@@ -92,37 +137,25 @@ full_enrollment_df['course_id'] = full_enrollment_df['course_id'].apply(lambda x
 
 # Remove enrollments for courses where CANVAS_NEEDED is "N" or TWO_YEAR_FLAG is "2"
 remove_courses = courses_df[(courses_df['CANVAS_NEEDED'] == 'N')]['MS_COURSE_ID']
-#remove_courses = courses_df[(courses_df['CANVAS_NEEDED'] == 'N') | (courses_df['CANVAS_NEEDED'] == 2)]['MS_COURSE_ID']
 full_enrollment_df = full_enrollment_df[~full_enrollment_df['course_id'].isin(remove_courses)]
 
-def format_student_id(user_id):
-    # Check if user_id is a string and not NaN
-    if pd.notna(user_id) and isinstance(user_id, str):
-        if user_id.startswith('u'):
-            return user_id  # If already properly formatted, return as is
-        elif len(user_id) <= 6:
-            return f'u{int(user_id):06}'  # Format as 'u' followed by six digits
-    elif pd.notna(user_id):
-        # Handle numeric user_ids that might have been interpreted as float/int
-        user_id = str(int(user_id))  # Convert to string, assuming it's a valid integer
-        return f'u{int(user_id):06}'
-    return user_id  # Return as is if it doesn't fit the criteria or is NaN
+print(full_enrollment_df)
+
+# Format User ID to be prefixed with "u" and 6 digits  
+def format_user_id(user_id):
+    """Ensure user_id is properly formatted."""
+    return f'u{int(user_id):06}' if pd.notna(user_id) else user_id
 
 # Format Course ID to be prefixed with "c" and 6 digits   
 def format_course_id(course_id):
-    if course_id.startswith('c'): # If already properly formatted, return as is
-        return course_id
-    elif len(course_id) <= 6:
-        return f'c{int(course_id):06}' # Assuming course IDs should start with "u"
-    else:
-        return course_id # Return as is if doesn't fit the criteria
+    """Ensure course_id is properly formatted."""
+    return f'c{int(course_id):06}' if pd.notna(course_id) else course_id
 
 # Apply formatting
-full_enrollment_df['user_id'] = full_enrollment_df['user_id'].apply(format_student_id)
+full_enrollment_df['user_id'] = full_enrollment_df['user_id'].apply(format_user_id)
 full_enrollment_df['course_id'] = full_enrollment_df['course_id'].apply(format_course_id)
 
 # Add the "type" and "status" columns
-#full_enrollment_df['type'] = 'student'
 full_enrollment_df['status'] = 'active'
 
 # Save separate CSV for each term_id
