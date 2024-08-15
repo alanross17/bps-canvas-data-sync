@@ -2,6 +2,10 @@ import pandas as pd
 import glob
 import os
 
+### =================
+### CSV File Handling
+### =================
+
 def load_and_combine_csv(directory):
     """Load all CSV files in the specified directory and combine them into a single DataFrame."""
     # Build the pattern to match all CSV files
@@ -20,6 +24,10 @@ def load_csv(file_path):
     except Exception as e:
         print(f"Failed to load file {file_path}: {e}")
         return pd.DataFrame()
+
+### =================================
+### Student Enrollments Preprocessing
+### =================================
 
 def preprocess_enrollment_data(file_path):
     """
@@ -71,6 +79,9 @@ def preprocess_enrollment_data(file_path):
     
     return processed_df
 
+### =================================
+### Teacher Enrollments Preprocessing
+### =================================
 def melt_teachers(df):
     # Drop columns where all entries are NaN which may result from extra commas in the CSV
     df.dropna(axis=1, how='all', inplace=True)
@@ -110,7 +121,9 @@ def preprocess_teacher_enrollments(file_path):
     return mapped_df
 
 
-#==========================
+### ===============
+### Main Processing
+### ===============
 
 def load_and_preprocess_data():
     """
