@@ -24,5 +24,5 @@ def preprocess_enrollment_data(file_path):
             })
 
     processed_df = pd.DataFrame(processed_rows)
-    processed_df['type'] = 'student'
+    processed_df['role'] = 'student'
     return processed_df
