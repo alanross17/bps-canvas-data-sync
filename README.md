@@ -105,3 +105,10 @@ Courses in MySchool don't exactly match Canvas requirements. Many courses overla
 ### 3.0 Run the Script
 
 Navigate to your working directory in terminal and run `python3 enrollments.py`.
+
+## TODO
+
+- Add support for student and teacher enrollments from single file.
+- Add support for custom enrollments
+- Add User updates
+- Ability to swap in new course files but maintain overrides, term data, blueprints, etc
