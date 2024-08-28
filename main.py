@@ -31,6 +31,15 @@ def save_enrollments_by_term(full_enrollment_df, token, canvas_url, account_id, 
         else:
             print(f"Skipping API post for term {term}")
 
+def apply_overrides(full_enrollment_df, override_file_path):
+    if os.path.exists(override_file_path):
+        overrides_df = pd.read_csv(override_file_path)
+        full_enrollment_df = pd.concat([full_enrollment_df, overrides_df]).drop_duplicates(subset=['user_id', 'course_id'], keep='last')
+        print(f"Overrides applied from {override_file_path}")
+    else:
+        print(f"No override file found at {override_file_path}. Skipping overrides.")
+    return full_enrollment_df
+
 def get_user_selected_terms(available_terms):
     print("Available terms:")
     for i, term in enumerate(available_terms, start=1):
@@ -50,6 +59,11 @@ def main():
     courses_df, term_map, merge_map = format_course_data(courses_df)
     full_enrollment_df = update_enrollments(full_enrollment_df, courses_df, term_map, merge_map)
     full_enrollment_df = format_ids(full_enrollment_df)
+
+    # Apply overrides if provided
+    override_file_path = 'temp_inputs/override.csv'
+    if override_file_path:
+        full_enrollment_df = apply_overrides(full_enrollment_df, override_file_path)
 
     # Get the list of available terms
     available_terms = sorted(full_enrollment_df['term_id'].dropna().unique())
