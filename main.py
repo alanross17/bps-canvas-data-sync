@@ -40,6 +40,33 @@ def apply_overrides(full_enrollment_df, override_file_path):
         print(f"No override file found at {override_file_path}. Skipping overrides.")
     return full_enrollment_df
 
+def add_teachers_to_all_courses(full_enrollment_df, courses_df, teacher_list_file):
+    if os.path.exists(teacher_list_file):
+        teacher_ids = pd.read_csv(teacher_list_file)['user_id'].astype(str).tolist()
+        new_teacher_enrollments = []
+
+        for _, course in courses_df.iterrows():
+            if(course['CANVAS_NEEDED'] != "N"):
+                for teacher_id in teacher_ids:
+                    new_teacher_enrollments.append({
+                        'course_name': course['long_name'],
+                        'course_id': course['course_id'],
+                        'subject': course.get('subject', ''),
+                        'term_id': course.get('term_id', ''),
+                        'name': '',  # If you want to add names, you can modify this
+                        'user_id': teacher_id,
+                        'role': 'teacher',
+                        'status': 'active'
+                    })
+
+        teachers_df = pd.DataFrame(new_teacher_enrollments)
+        full_enrollment_df = pd.concat([full_enrollment_df, teachers_df], ignore_index=True)
+        print(f"Added {len(teacher_ids)} teachers to every course in the final courses.csv.")
+    else:
+        print(f"No teacher list file found at {teacher_list_file}. Skipping teacher addition.")
+    
+    return full_enrollment_df
+
 def get_user_selected_terms(available_terms):
     print("Available terms:")
     for i, term in enumerate(available_terms, start=1):
@@ -64,6 +91,11 @@ def main():
     override_file_path = 'temp_inputs/override.csv'
     if override_file_path:
         full_enrollment_df = apply_overrides(full_enrollment_df, override_file_path)
+
+    # Add certain teachers to every course
+    teacher_list_file = 'temp_inputs/add_to_all.csv'
+    if teacher_list_file:
+        full_enrollment_df = add_teachers_to_all_courses(full_enrollment_df, courses_df, teacher_list_file)
 
     # Get the list of available terms
     available_terms = sorted(full_enrollment_df['term_id'].dropna().unique())
