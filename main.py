@@ -55,7 +55,7 @@ def add_teachers_to_all_courses(full_enrollment_df, courses_df, teacher_list_fil
                         'term_id': course.get('term_id', ''),
                         'name': '',  # If you want to add names, you can modify this
                         'user_id': teacher_id,
-                        'role': 'teacher',
+                        'role': 'StudentServices',
                         'status': 'active'
                     })
 
