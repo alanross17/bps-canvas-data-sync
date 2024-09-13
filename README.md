@@ -14,13 +14,11 @@ This script relies on specific data exports from MySchool to generate enrolment 
 
 1. From MySchool select "Data Reports" -> "Export".
 2. Then select the following
-
     - "Course Info"
     - "Excel 2007-2010 (*.xlsx)"
     - Filter by: "By school level", and select "Middle School"
 
     Requried Data:
-
     - "Course Name"
     - "Course ID"
     - "Trax Code"
@@ -32,13 +30,11 @@ This script relies on specific data exports from MySchool to generate enrolment 
 
 1. Again, from MySchool select "Data Reports" -> "Export".
 2. Then select the following:
-
     - "Course Info"
     - "Comma Separated Value (*.csv)"
     - Filter by: "By school level", and select "Middle School"
 
     Requried Data:
-
     - "Course Name"
     - "Course ID"
     - "Subject"
@@ -53,13 +49,11 @@ This script relies on specific data exports from MySchool to generate enrolment 
 
 1. Again, from MySchool select "Data Reports" -> "Export".
 2. Then select the following:
-
     - "Course Info"
     - "Comma Separated Value (*.csv)"
     - Filter by: "By school level", and select "Middle School"
 
     Requried Data:
-
     - "Course Name"
     - "Course ID"
     - "Subject"
@@ -74,13 +68,11 @@ This script relies on specific data exports from MySchool to generate enrolment 
 
 1. From MySchool select "Data Reports" -> "Export".
 2. Then select the following:
-
     - "User Info"
     - "Comma Separated Value (*.csv)"
     - Filters: Choose staff and teachers for all school levels.
 
     Requried Data:
-
     - "Surname"
     - "Name"
     - "User ID"
