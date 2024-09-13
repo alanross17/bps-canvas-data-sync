@@ -42,26 +42,36 @@ def apply_overrides(full_enrollment_df, override_file_path):
 
 def add_teachers_to_all_courses(full_enrollment_df, courses_df, teacher_list_file):
     if os.path.exists(teacher_list_file):
-        teacher_ids = pd.read_csv(teacher_list_file)['user_id'].astype(str).tolist()
+        # Read teacher list which now contains user_id, name, and role
+        teacher_list = pd.read_csv(teacher_list_file)
+        
+        # Ensure that necessary columns are present in the CSV
+        if not {'user_id', 'name', 'role'}.issubset(teacher_list.columns):
+            print(f"Error: The teacher list CSV must contain 'user_id', 'name', and 'role' columns.")
+            return full_enrollment_df
+        
         new_teacher_enrollments = []
 
+        # Iterate over each course and assign each teacher
         for _, course in courses_df.iterrows():
             if(course['CANVAS_NEEDED'] != "N"):
-                for teacher_id in teacher_ids:
+                for _, teacher in teacher_list.iterrows():
                     new_teacher_enrollments.append({
                         'course_name': course['long_name'],
                         'course_id': course['course_id'],
                         'subject': course.get('subject', ''),
                         'term_id': course.get('term_id', ''),
-                        'name': '',  # If you want to add names, you can modify this
-                        'user_id': teacher_id,
-                        'role': 'StudentServices',
+                        'name': teacher['name'],  # Pull the name from the teacher list
+                        'user_id': teacher['user_id'],
+                        'type': '',  # This can be constant if you need it to match Canvas formatting
+                        'role': teacher['role'],  # Pull the role from the teacher list
                         'status': 'active'
                     })
 
+        # Add the new teacher enrollments to the full enrollment dataframe
         teachers_df = pd.DataFrame(new_teacher_enrollments)
         full_enrollment_df = pd.concat([full_enrollment_df, teachers_df], ignore_index=True)
-        print(f"Added {len(teacher_ids)} teachers to every course in the final courses.csv.")
+        print(f"Added teachers to every course in the final courses.csv.")
     else:
         print(f"No teacher list file found at {teacher_list_file}. Skipping teacher addition.")
     
