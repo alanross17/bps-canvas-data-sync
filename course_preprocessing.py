@@ -16,7 +16,10 @@ def update_enrollments(full_enrollment_df, courses_df, term_map, merge_map):
 
 def format_ids(full_enrollment_df):
     def format_user_id(user_id):
-        return f'u{int(user_id):06}' if pd.notna(user_id) else user_id
+        if pd.notna(user_id) and str(user_id).lower() != 'nan':
+            return f'u{int(user_id):06}'
+        else:
+            return user_id
 
     def format_course_id(course_id):
         return f'c{int(course_id):06}' if pd.notna(course_id) else course_id
